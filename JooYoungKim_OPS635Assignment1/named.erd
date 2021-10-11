@@ -1,0 +1,59 @@
+include bind
+bind::server::conf { '/etc/named.conf':
+  listen_on_addr    => [ 'any', '192.168.12.0/24' ],
+  listen_on_v6_addr => [ 'any' ],
+  forwarders        => [ '8.8.8.8', '192.168.12.0/24' ],
+  allow_query       => [ '192.168.12.0/24' ],
+  zones             => {
+    'assignment1jykim32.ops' => [
+      'type master',
+      'file "assignment1jykim32-ops"',
+    ],
+    '12.168.192.in-addr.arpa' => [
+      'type master',
+      'file "12.168.192.in-addr.arpa"',
+    ],
+  },
+}
+bind::server::file { 'assignment1jykim32.ops':
+  source => 'puppet:///modules/mymodule/dns/assignment1jykim32-ops',
+}
+bind::server::file { '12.168.192.in-addr.arpa':
+  source => 'puppet:///modules/mymodule/dns/12.168.192.in-addr.arpa',
+}
+bind::server::file { [ 'assignment1jykim32.ops', '12.168.192.in-addr.arpa' ]:
+  source_base => 'puppet:///modules/mymodule/dns/',
+}
+class { '::bind': packagenameprefix => 'bind97' }
+class { '::bind': chroot => true }
+bind::server::conf { '/etc/named.conf':
+ 
+}
+bind::server::file { 'assignment1jykim32.ops':
+  zonedir => '/var/named',
+  source  => 'puppet:///files/dns/assignment1jykim32.ops',
+}
+Bind::Server::File { zonedir => '/nfs/zones' }
+
+bind::server::conf {
+  zones => {
+    'assignment1jykim32.ops' => [
+      'type master',
+      'file "assignment1jykim32-ops"',
+    ],
+  },
+  views => {
+    'trusted' => {
+      'match-clients' => [ '192.168.12.0/24' ],
+      'zones' => {
+        'assignment1jykim32.ops' => [
+          'type master',
+          'file "assignment1jykim32-ops"',
+        ],
+      },
+    },
+    'default' => {
+      'match-clients' => [ 'any' ],
+    },
+  },
+}
